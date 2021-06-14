@@ -1,0 +1,190 @@
+---
+title: "Atteggiamento dei cittadini italiani nei confronti della sicurezza informatica"
+author:
+  email: giunta.marco@spes.sissa.it
+  name: Marco Giunta
+date: "2021"
+output:
+  ioslides_presentation:
+    css: styles/style.css
+    incremental: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r eval = FALSE}
+library(tidyverse)
+library(haven)
+ffc.stata <- read_dta(file = "ZA7580_v1-0-0.dta")
+#ffc.spss <- read_sav(file = "ZA7580_v1-0-0.sav")
+
+df_new <- ffc.stata %>% select(starts_with(c("isocntry", "d11", "d62", "qc", "d10", "d25", "d8r2")))
+
+df_new = df_new %>% 
+  rename(
+    age = "d11",
+    country = "isocntry",
+    gender = "d10"
+    )
+
+# Replace 1,2 with gender
+library(dplyr)
+df_new = df_new %>% 
+  mutate(gender = case_when(gender == 1 ~ "M",
+                            gender == 2 ~ "F"))
+# Saving df RData format
+save(df_new, file = "df.rda")
+# To load the data again
+load("output/df.rda")
+```
+
+```{r, message=FALSE}
+library(tidyverse)
+
+# To load the data again
+load("output/df.rda")
+```
+
+
+## Questionario - Introduzione
+
+La Commissione Europea, tra l'8 e il 22 Ottobre 2019, ha sottoposto a 27,607 cittadini dei 28 stati membri dell' Unione Europa un questionario[^1] relativo all'atteggiamento nei confronti della sicurezza informatica.
+
+#Il dataset del questionario disponil
+
+I risultati della ricerca sono stati pubblicati a gennaio 2020: diamo uno sguardo più approfondito all'atteggiamento degli italiani
+
+[^1]: https://europa.eu/eurobarometer/surveys/detail/2249 "Eurobarometer 92.2"
+
+## Questionario - Età cittadini
+
+L'età media dei partecipanti è 53 anni 
+
+```{r, echo=FALSE}
+df_new %>%
+  group_by(country) %>%
+  summarize(mean_age = mean(age)) %>%
+  ggplot(aes(x = country, y = mean_age, fill = country)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label=ifelse(country == "IT", ceiling(mean_age), " ")), vjust=-1.3, size=3.5) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) +
+  geom_hline(aes(yintercept = mean(mean_age)), color="blue", linetype="dashed") + 
+  geom_text(aes( 0, mean(mean_age), label = ceiling(mean(mean_age)), vjust = -1, hjust = -1), size = 3, color="blue") + 
+  labs(
+    fill = "Nazioni",
+    x = "Stati Unione Europea",
+    y = "Età"
+  ) +
+  theme_minimal()
+```
+
+in linea con quella gli intervistati italiani. I partecipanti del nostro paese sono  
+
+```{r}
+# The above adds a redundant legend. With the legend removed:
+df_new %>%
+  filter(country == "IT") %>%
+  ggplot(aes(x=gender, y=age, fill=gender)) + 
+  geom_boxplot() +
+  labs(x = "Sesso") + 
+  labs(y = "Età") + 
+    guides(fill=FALSE)
+```
+
+***
+
+
+
+
+
+
+ATTEGGIAMENTO DEI CITTADINI EUROPEI NEI CONFRONTI DELLA SICUREZZA INFORMATICAcitizensla  ha incaricato 
+La Commis
+
+
+This survey was carried out by Kantar on behalf of Kantar Belgium in the 28 Member States of the European Union (EU) between . Some 27,607 EU citizens from different social and demographic categories were interviewed face-to-face at home and in their native language on behalf of the Directorate-General for Communication from European Commission. 
+
+
+D11 Quanti anni ha?
+
+Q1 Di che nazionalità è lei? La preghiamo di indicare il Paese/i Paesi pertinenti.
+
+
+```{r eval = FALSE}
+df_new %>%
+  filter(country == "IT") %>%
+  ggplot(aes(x = age)) + geom_histogram() +
+  labs(x = "28 stati Unione Europea") + 
+  labs(y = "Età") + 
+  theme_minimal()
+
+df_new %>%
+  filter(country == "IT") %>%
+  ggplot(aes(x = age, fill = gender)) +
+  geom_histogram(binwidth = .8, alpha =.5, position = "dodge")
+  
+
+# The above adds a redundant legend. With the legend removed:
+df_new %>%
+  filter(country == "IT") %>%
+  ggplot(aes(x=gender, y=age, fill=gender)) + geom_boxplot() +
+  labs(x = "Sesso") + 
+  labs(y = "Età") + 
+    guides(fill=FALSE)
+```
+
+
+Q1: SE IL CODICE 29 È L'UNICA RISPOSTA TERMINARE L'INTERVISTA
+
+D62 Utilizzo internet
+QC1: dispositivo internet
+QC2: attivita internet
+QC3 preoccupazioni internet
+QC4 cambio password
+QC5 cambio modo uso internet problemi sicurezza
+QC7 Quanto si sente ben informato/a sui rischi dei crimini informatici?
+QC8 I crimini informatici includono diversi tipi di attività criminali. Quanto è preoccupato/a, personalmente, di trovarsi nelle seguenti situazioni o di esserne vittima?
+QC9 Negli ultimi tre anni, con quale frequenza ha vissuto o è stato/a vittima di ciascuna delle seguenti situazioni?
+QC10 Negli ultimi tre anni, i Suoi familiari, amici o conoscenti hanno vissuto o sono stati vittime di una di queste situazioni? Mi dica tutte le situazioni del caso.
+QC11 Che cosa ha fatto in ognuna delle situazioni che ha vissuto personalmente o di cui è stato/a vittima?
+QC14 Lei ha mai segnalato un crimine informatico o qualsiasi altro comportamento illegale online (ad es. attacchi informatici, bullismo o molestie online)?
+QC15 Potrebbe dirmi quanto è d'accordo o in disaccordo con ciascuna delle seguenti affermazioni?
+
+D8R2
+
+livello di studio
+1 basso
+2 medio
+3 alto
+4 rifiuta
+5 buuu
+7 studia ancora 
+8 NA (non sa)
+
+SE "STUDIA ANCORA", CODIFICARE '00' ‐ SE "NESSUN TITOLO DI STUDIO" CODIFICARE '01' ‐ SE "RIFIUTA" CODIFICARE '98' ‐ SE "NON SA" CODIFICARE '99'
+
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Output
+
+```{r cars, echo = TRUE}
+summary(cars)
+```
+
+## Slide with Plot
+
+```{r pressure}
+plot(pressure)
+```
+

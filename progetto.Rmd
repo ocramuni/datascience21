@@ -3,7 +3,7 @@ title: "Atteggiamento dei cittadini italiani nei confronti della sicurezza infor
 author:
   email: giunta.marco@spes.sissa.it
   name: Marco Giunta
-date: "2021"
+date: "Luglio 2021"
 output:
   ioslides_presentation:
     css: styles/style.css
@@ -11,44 +11,197 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
 ```
 
 ```{r eval = FALSE}
 library(tidyverse)
+library(labelled)
 library(haven)
-ffc.stata <- read_dta(file = "ZA7580_v1-0-0.dta")
-#ffc.spss <- read_sav(file = "ZA7580_v1-0-0.sav")
 
-df_new <- ffc.stata %>% select(starts_with(c("isocntry", "d11", "d62", "qc", "d10", "d25", "d8r2")))
+# Convert Stata file
+df.stata <- read_dta(file = "data/ZA7580_v1-0-0.dta")
 
-df_new = df_new %>% 
+# Select only interesting values
+survey <- df.stata %>% 
+  select(starts_with(c("isocntry", "d11", "d62", "qc", "d10", "d25", "d8r2", "p7it")))
+
+# Rename 
+survey <- survey %>% 
   rename(
     age = "d11",
+    age_category = "d11r2",
     country = "isocntry",
-    gender = "d10"
+    community = "d25",
+    education = "d8r2",
+    gender = "d10",
+    informed = "qc7",
+    internet = "d62t",
+    region = "p7it"
     )
 
-# Replace 1,2 with gender
-library(dplyr)
-df_new = df_new %>% 
-  mutate(gender = case_when(gender == 1 ~ "M",
-                            gender == 2 ~ "F"))
-# Saving df RData format
-save(df_new, file = "df.rda")
-# To load the data again
-load("output/df.rda")
+# Translate gender labels
+# survey$gender
+#     1   Man
+#     2 Woman
+survey <- survey %>% 
+  add_value_labels(gender = c(Uomo = 1, Donna = 2))
+
+# Replace index with gender name
+survey <- survey %>%
+  mutate(gender = as_factor(gender))
+
+# Translate community labels
+# survey$community
+#     1      Rural area or village
+#     2 Small or middle sized town
+#     3                 Large town
+survey <- survey %>% 
+  add_value_labels(community = c("Area rurale o villaggio" = 1,
+                                 "Piccola o media città" = 2,
+                                 "Grande città" = 3))
+
+# Replace index with location description
+survey <- survey %>%
+  mutate(community = as_factor(community)) %>%
+  # DK -> NA
+  mutate(community = na_if(community, "DK"))
+
+# Translate education age labels
+# survey$education
+#     1         Up to 15 years
+#     2                  16-19
+#     3     20 years and older
+#     4         Still Studying
+#     5 No full-time education
+#     7                Refusal
+#     8                     DK
+survey <- survey %>% 
+  add_value_labels(education = c("Fino a 15 anni" = 1,
+                                 "20 anni e oltre" = 3,
+                                 "Studia ancora" = 4,
+                                 "Nessuna educazione" = 5))
+
+# Replace index with education age
+survey <- survey %>%
+  mutate(education = as_factor(education)) %>%
+  # DK -> NA
+  mutate(education = na_if(education, "DK"))
+
+
+# Translate age category labels
+# survey$age_category
+#     1      15 - 24 years
+#     2      25 - 34 years
+#     3      35 - 44 years
+#     4      45 - 54 years
+#     5      55 - 64 years
+#     6 65 years and older
+survey <- survey %>% 
+  add_value_labels(age_category = c("15 - 24" = 1,
+                                    "25 - 34" = 2,
+                                    "35 - 44" = 3,
+                                    "45 - 54" = 4,
+                                    "55 - 64" = 5,
+                                    "65 e oltre" = 6))
+
+# Replace index with age categories
+survey <- survey %>%
+  mutate(age_category = as_factor(age_category)) %>%
+  # DK -> NA
+  mutate(age_category = na_if(age_category, "DK"))
+
+# Replace region labels
+# survey$region
+#     1 Piemonte & Valle d'Aosta / Vallee d'Aoste
+#     5      Prov. Trento & Prov. Bolzano / Bozen
+#     7                     Friuli-Venezia Giulia
+survey <- survey %>% 
+  add_value_labels(region = c("Piemonte & Valle d'Aosta" = 1,
+                              "Trentino-Alto Adige" = 5,
+                              "Friuli Venezia Giulia" = 7))
+
+# Replace index with region name
+survey <- survey %>%
+  mutate(region = as_factor(region))
+  
+# Replace internet connection frequency labels
+# survey$internet
+#    1 Everyday/almost everyday (at least once 1 in d62_1 to d62_4)
+#    2        Often/sometimes (at least once 2-5 in d62_1 to d62_4)
+#    3                   Never/no access (6 or 7 in d62_1 to d62_4)
+#    4         No Internet access at all (only 7 in d62_1 to d62_4)
+
+survey <- survey %>% 
+  add_value_labels(internet = c("Ogni giorno o quasi" = 1,
+                                "Spesso/a volte" = 2,
+                                "Mai/Nessun accesso" = 3))
+
+# Replace index with internet connection frequency labels
+survey <- survey %>%
+  mutate(internet = as_factor(internet))
+
+
+# Replace informed level labels
+# survey$informed
+#     1     Very well informed
+#     2   Fairly well informed
+#     3 Not very well informed
+#     4    Not at all informed
+#     5                     DK
+survey <- survey %>% 
+  add_value_labels(informed = c("Molto bene" = 1,
+                                "Abbastanza bene" = 2,
+                                "Abbastanza male" = 3,
+                                "Molto male" = 4))
+
+# Replace index with age categories
+survey <- survey %>%
+  mutate(informed = as_factor(informed)) %>%
+  # DK -> NA
+  mutate(informed = na_if(informed, "DK"))
+
+# Saving survey in RData format
+save(survey, file = "output/survey.rda")
 ```
 
-```{r, message=FALSE}
+```{r}
 library(tidyverse)
 
-# To load the data again
-load("output/df.rda")
+# To load the survey data
+load("output/survey.rda")
 ```
 
 
-## Questionario - Introduzione
+## Questionario
+
+Cybercrime consists of criminal acts committed online using electronic communications networks and information systems. It is a borderless problem that can be classified into three broad types:
+ crimes specific to the Internet – such as attacks on information systems or phishing (e.g. fake bank websites, designed to solicit passwords giving access to victims' bank accounts).
+ fraud and forgery – large-scale fraud can be committed online through techniques such as identity theft, phishing, spam and malware (viruses, spyware, etc.).
+ illegal online content – including child sexual abuse material, incitement to racial hatred or terrorist acts and glorification of violence, terrorism, racism, xenophobia, etc...
+
+The aim of this Special Eurobarometer survey is to understand EU citizens’ awareness, experiences and perceptions of cyber security.
+
+The report begins by reviewing Internet use amongst respondents, as well as the devices they use for access and the activities they do online.
+
+It moves on to discuss respondents’ concerns about various aspects of online security, including concerns about online banking or shopping online. It also considers changes respondents have made to their behaviour as a result of concerns about security and privacy, such as changing online passwords.
+
+The third chapter looks at respondents’ level of information about the risks of cybercrime, how they feel about a wide range of issues relating to cyber security, and their level of concern about becoming a victim of cybercrime. The discussion then moves to considers respondents personal experience of cybercrime, as well as their awareness of other people who have experienced it. The actions taken by victims of cybercrime are also discussed. In the final section of this chapter, the measures taken by respondents to protect children from online harassment are detailed.
+The last chapter of the report explores respondents’ awareness of where they can report a cybercrime or illegal online behaviour, as well as the incidence of reporting these crimes. The actions respondents would take if they were a victim of a range of cybercrimes are also discussed.
+
+
+This survey was carried out by Kantar on behalf of Kantar Belgium in the 28 Member States of the European Union (EU) between 8 and 22 October 2019. Some 27,607 EU citizens from different social and demographic categories were interviewed face-to-face at home and in their native language on behalf of the Directorate-General for Communication from European Commission. The methodology used is that of the Standard Eurobarometer surveys carried out by the Directorate-General for Communication (“Media Monitoring and Eurobarometer” Unit)3. It is the same for all countries and territories covered in the survey. A technical note concerning the interviews conducted by the member institutes of Kantar network is annexed to this report. It also specifies the confidence intervals4.
+
+
+
+Daily Internet use is still on the rise
+
+Smartphones are the main means of accessing the Internet
+
+Social activities and online banking are the most common online activities
+
+
+
 
 La Commissione Europea, tra l'8 e il 22 Ottobre 2019, ha sottoposto a 27,607 cittadini dei 28 stati membri dell' Unione Europa un questionario[^1] relativo all'atteggiamento nei confronti della sicurezza informatica.
 
@@ -58,15 +211,1285 @@ I risultati della ricerca sono stati pubblicati a gennaio 2020: diamo uno sguard
 
 [^1]: https://europa.eu/eurobarometer/surveys/detail/2249 "Eurobarometer 92.2"
 
-## Questionario - Età cittadini
+## Intervistati - Età
 
-L'età media dei partecipanti è 53 anni 
 
-```{r, echo=FALSE}
-df_new %>%
+
+```{r}
+survey %>%
   group_by(country) %>%
   summarize(mean_age = mean(age)) %>%
   ggplot(aes(x = country, y = mean_age, fill = country)) + 
+  geom_bar(stat = "identity") +
+  geom_text(aes(label=ifelse(country == "IT", ceiling(mean_age), " ")), vjust=-1.3, size=3.5) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid label overlap
+  geom_hline(aes(yintercept = mean(mean_age)), color="blue", linetype="dashed") + 
+  geom_text(aes( 0, mean(mean_age), label = ceiling(mean(mean_age)), vjust = -1, hjust = -1), size = 3, color="blue") + 
+  labs(
+    fill = "Nazioni",
+    x = "Stati Unione Europea",
+    y = "Età"
+  ) +
+  theme_minimal()
+```
+
+L'età media dei partecipanti è 51 anni, con una leggera maggioranza di donne (51%). 
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(gender) %>%
+  group_by(gender) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+```
+ 
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  ggplot(aes(x=gender, y=age, fill=gender)) + 
+  geom_boxplot() +
+  labs(x = "Genere") + 
+  labs(y = "Età") + 
+  guides(fill="none") # remove legend
+```
+La differenza di genere è minima fino ai 44 anni, nella fascia 45-64 abbiamo la maggioranza di partecipanti donne ed infine un maggioranza di uomini nella fascia 65 e oltre.
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  group_by(age_category, gender) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = age_category, y = count, fill = gender)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  labs(
+    x = "Fasce d'età",
+    y = "Partecipanti",
+    fill = "Genere"
+  )
+```
+
+
+
+## Intervistati - Dove vivono
+
+```{r, eval=FALSE}
+survey %>%
+  drop_na(community) %>%
+  group_by(community) %>%
+  summarise(count = n()) %>%
+  mutate(all = sum(count), 
+     per = paste0(round(100 * count/all, 2), "%")) %>%
+  # Piechart
+  ggplot(aes(x="", y=count, fill=community)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  # Add percent value on piechart
+  geom_text(aes(label = per), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Zona di residenza")
+```
+
+Oltre il 65% degli intervistati vive in piccole o medie città
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(community) %>%
+  group_by(community) %>%
+  summarise(count = n()) %>%
+  mutate(all = sum(count), 
+     per = paste0(round(100 * count/all, 2), "%")) %>%
+  # Piechart
+  ggplot(aes(x="", y=count, fill=community)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  # Add percent value on piechart
+  geom_text(aes(label = per), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Zona di residenza")
+```
+
+Lombardia, Campania, Lazio e Sicilia sono le regioni con il più alto numero di intervistati
+
+```{r}
+# https://www.istat.it/it/archivio/222527
+# https://www.agnesevardanega.eu/wiki/r/ggplot2/mappe
+
+library(sf)
+ 
+#leggere shapefiles (DATI ISTAT)
+istat <- st_read("data/Reg01012021_g", quiet=TRUE)
+
+# HACK: split count for aggregate regions
+tmp_region <- survey %>%
+  filter(country == "IT") %>%
+  drop_na(region) %>%
+  group_by(region) %>%
+  summarise(count = n()) %>%
+  mutate(region = strsplit(as.character(region), "&")) %>%
+  mutate(count = count / lengths(region)) %>%
+  unnest(cols = c(region)) %>%
+  mutate(across(where(is.character), str_trim))
+
+right_join(istat, tmp_region, by = c("DEN_REG" = "region")) %>% 
+  ggplot(aes(fill = count)) +
+  geom_sf(col = "black") +
+  geom_sf_text(aes(label = count), size = 3, check_overlap = TRUE) +
+  # tema vuoto
+  #heme_void() +
+  # scala del colori
+  #scale_colour_gradient(low = "yellow", high = "red", na.value = NA) +
+  scale_fill_distiller(direction = 1) +
+  # eliminare il titolo della legenda
+  labs(x = NULL, y = NULL, fill = "Partecipanti") +
+  #theme(axis.text.x = element_blank()) +
+  #theme(axis.text.y = element_blank()) +
+   theme_void()
+```
+
+## Intervistati - Grado di istruzione
+
+```{r, eval=FALSE}
+
+survey %>%
+  drop_na(education) %>%
+  group_by(education) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(y=count, x=education, fill=factor(education))) + 
+  geom_bar(stat="identity") +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  ggtitle("Grado di istruzione") +
+  ylab("") + 
+  theme_minimal()
+
+```
+
+Tra gli intervistati il titolo di studio prevalente (40%) è quello della la scuola secondaria di secondo grado, seguito da 
+Il 40% degli intervistati ha completato la scuola secondaria di secondo grado e il restante ha un titolo di studio superiore o inferiore (entrambi al 24%). 
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(education) %>%
+  group_by(education) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+```
+
+
+```{r, echo=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(education) %>%
+  group_by(education) %>%
+  summarise(count = n()) %>%
+  filter(count > 10) %>%
+  ggplot(aes(y=count, x=education, fill=factor(education))) +
+  geom_bar(stat="identity") +
+  ggtitle("Grado di istruzione") +
+  guides(fill="none") + # remove legend
+  xlab("Età completamento del percorso di studi") +
+  ylab("") + 
+  theme_minimal()
+```
+
+Non ci sono differenze di genere nel grado di istruzione dei partecipanti
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(education) %>%
+  group_by(education, gender) %>% 
+  summarise(count = n()) %>% 
+  filter(count > 10) %>%
+  ggplot(aes(x = education, y = count, fill = gender)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  labs(
+    x = "Età completamento del percorso di studi",
+    y = "",
+    fill = "Genere"
+  ) +
+  theme_minimal()
+  
+```
+
+
+
+## Abitudini - quanto si collegano ad internet
+
+Il 70% percento degli intervistati si connette ad internet ogni giorno (o quasi) mentre solo il 2% non ha collegamento.
+
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(internet) %>%
+  group_by(internet) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+```
+
+```{r}
+
+survey %>%
+  filter(country == "IT") %>%
+  group_by(internet, gender) %>% 
+  summarise(count = n()) %>%
+  filter(count > 25) %>%
+  ggplot(aes(x = internet, y = count, fill = factor(internet))) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  guides(fill="none") + # remove legend
+  xlab("Frequnza di connesione ad internet") + 
+  ylab("Partecipanti") +
+  theme_minimal()
+
+```
+
+L'utilizzo giornaliero di internet prevale in tutte le fasce d'età, tranne per quella 65 e oltre, dove la maggior parte non si collega mai, oppure non ha accesso.
+
+```{r}
+survey %>%
+  filter(country == "IT", as.numeric(internet) != 4) %>%
+  drop_na(age_category) %>%
+  group_by(age_category, internet) %>% 
+  summarise(count = n()) %>%
+  ggplot(aes(fill=internet, y=count, x=age_category)) + 
+  geom_bar(position="stack", stat="identity") + 
+  labs(
+    x = "Fasce d'età",
+    y = "",
+    fill = "Connessione\ninternet"
+  ) +
+  theme(axis.text.y = element_blank())
+
+  
+```
+
+Non prevale invece per tutti i gradi di istruzione: i partecipanti con grado di istruzione inferiore tendono a collegarsi meno
+
+```{r message=FALSE}
+survey %>%
+  filter(country == "IT", as.numeric(internet) != 4, as.numeric(education) != 6) %>%
+  drop_na(education) %>%
+  group_by(education, internet) %>% 
+  summarise(count = n()) %>% 
+    ggplot(aes(fill=internet, y=count, x=education)) + 
+  geom_bar(position="stack", stat="identity") +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  labs(
+    x = "Grado di istruzione",
+    y = "",
+    fill = "Connessione\ninternet"
+  ) +
+  theme(axis.text.y = element_blank())
+```
+
+
+## Abitudini - Strumento utilizzato
+
+Lo smartphone è lo strumento più usato per connettersi ad internet, seguito dal pc.
+
+```{r}
+  survey %>%
+    filter(country == "IT") %>%
+    pivot_longer(qc1_1:qc1_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+    select(c("question", "response")) %>%
+    group_by(question) %>% # Group by ID and TARG_AVG
+    summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+    ggplot(aes(x = question, y = count, fill = question)) +
+    geom_bar(stat = "identity", position = position_dodge()) + 
+    scale_x_discrete(labels = c("Desktop PC", "Laptop", "Tablet", "Smartphone", "TV", "Console", "Altro")) + 
+    scale_fill_discrete(name = "Strumento", labels = c("Desktop PC", "Laptop", "Tablet", "Smartphone", "TV", "Console", "Altro")) +
+    xlab("") + 
+    ylab("Partecipanti")
+```
+
+Questo vale per tutte le fasce d'età
+
+
+```{r}
+
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc1_1:qc1_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) + 
+  geom_bar(position="dodge", stat="identity") +
+  scale_fill_discrete(name = "Strumento", labels = c("Desktop PC", "Laptop", "Tablet", "Smartphone", "TV", "Console", "Altro")) +
+  xlab("Fasce d'età") +
+  ylab("Partecipanti") + 
+  theme_minimal()  
+
+```
+
+## Abitudini - cosa fanno
+
+Lo scambio di email (14%), la messaggistica (13%), i social network (12%) e lo scambio di informazioni su forum/blog (11%) sono le principali attività degli intervistati
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc2_1:qc2_14, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%
+  mutate(percent = count / sum(count) * 100)
+```
+
+```{r}
+
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc2_1:qc2_14, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination
+  filter(count > 200) %>%
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3), labels = c("Email", "Messaggistica", "Social Network", "Forum/Blog/News", "Home Banking", "Acquisti", "Video chiamate","Intrattenimento", "Gioco online")) +
+  scale_fill_discrete(name = "Attività", labels = c("Home banking", "Messaggistica", "Video chiamate", "Acquisti", "Social Network", "Email", "Gioco online", "Intrattenimento", "Forum/Blog/News")) +
+  xlab("") + 
+  ylab("") +
+  theme_minimal() 
+```
+
+L'uso dei social network viene sostituito dalle operazioni di home banking per la fascia d'età superiore ai 55 anni.
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc2_1:qc2_14, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  #scale_fill_discrete(name = "Attività", labels = c("Home banking", "Acquisti", "Vendita", "Social Network", "Email", "Gioco online", "Intrattenimento", "Forum/Blog/News", "Servizi pubblici", "E-learing", "Messaggistica", "Video chiamate" ,"Altro")) +
+  scale_fill_discrete(name = "Attività", labels = c("Home banking", "Messaggistica", "Social Network", "Email" , "Forum/Blog/News")) +
+  xlab("Fasce d'età") +
+  ylab("") +
+  theme_minimal()
+
+```
+
+## Abitudini - Quali sono le Sue preoccupazioni
+
+La sicurezza dei pagamenti (27%) e l'uso improrio dei dati personali (27%) sono le principali preoccupazioni degli intervistati quando effettuano operazioni bancarie o acquistano beni e servizi.
+
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc3_1:qc3_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%
+  mutate(percent = count / sum(count) * 100)
+```
+
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc3_1:qc3_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3), labels = c("Sicurezza pagamenti", "Uso improprio dati", "Esaminare merce", "Non ricevere prodotto", "Altro","Non sa", "Nessuna")) + # avoid labels overlap
+  scale_fill_discrete(name = "Preoccupazione", labels = c("Esaminare merce", "Sicurezza pagamenti", "Uso improprio dati", "Non ricevere prodotto", "Altro","Non sa", "Nessuna")) +
+  xlab("") + 
+  ylab("Partecipanti")
+```
+
+Questo dato vale per tutte le età
+
+```{r eval=TRUE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc3_1:qc3_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  scale_fill_discrete(name = "Preoccupazione", labels = c("Esaminare merce", "Sicurezza pagamenti", "Uso improprio dati", "Non ricevere prodotto", "Altro")) +
+  xlab("Fasce d'età") +
+  ylab("Partecipanti") +
+  theme_minimal()
+```
+
+o grado di istruzione
+
+```{r eval=TRUE}
+survey %>%
+  filter(country == "IT", as.numeric(education) != 6) %>% # remove education-refusal
+  drop_na(education) %>%
+  pivot_longer(qc3_1:qc3_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("education", "question", "response")) %>%
+  group_by(education, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(education))) +
+  geom_bar(position = "dodge", stat="identity") +
+  scale_x_discrete(guide = guide_axis(n.dodge=3), name = "Grado di istruzione") +
+  scale_fill_discrete(name = "Preoccupazione", labels = c("Esaminare merce", "Sicurezza pagamenti", "Uso improprio dati", "Non ricevere prodotto", "Altro","Non sa", "Nessuna")) +
+  ylab("") +
+  theme_minimal()
+```
+
+## Abitudini - Negli ultimi 12 mesi, Lei ha cambiato la password
+
+La maggior parte degli intervistati (65%) ha cambiato almeno una password dei propri servizi online negli ultimi 12 mesi. La password del proprio account email è quella maggiormente cambiata (22%), seguita da quella dell'Home Banking (14%) e dei Social (11%). Solo il 6% ha cambiato la password su un sito di acquisti online, percentuale che scende al 3% per la password dei siti dei servizi pubblici e delle piattaforme di gioco online. Circa 1 su 10 ha cambiato la password per altri servizi online.
+
+```{r, eval=FALSE}
+survey %>%
+  drop_na(qc4t) %>%
+  group_by(qc4t) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc4_1:qc4_9, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%  
+  mutate(percent = count / sum(count) * 100)
+
+```
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc4_1:qc4_7, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3), labels = c("Email", "HomeBanking", "Social Network", "Altro","Acquisti online", "Servizi pubblici", "Gioco online")) + # avoid labels overlap
+  scale_fill_discrete(name = "Servizio", labels = c("Email", "Social Network", "Acquisti online", "HomeBanking", "Gioco online","Servizi Pubblici", "Altro", "Nessuno")) +
+  xlab("") + 
+  ylab("Partecipanti")
+```
+
+La password dell'account email resta quella più cambiata nelle fasce d'età fino a 44 anni. In quelle da 45 in poi prevale l'assenza di cambio password negli ultimi 12 mesi.
+
+```{r eval=TRUE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc4_1:qc4_9, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  #scale_fill_discrete(name = "Servizio", labels = c("Email", "Social Network", "Acquisti online", "HomeBanking", "Gioco online","Servizi Pubblici", "Altro", "Nessuno")) +
+  scale_fill_discrete(name = "Servizio", labels = c("Email", "Social Network", "HomeBanking", "Altro", "Nessuno")) +
+  xlab("Fasce d'età") +
+  ylab("") +
+  theme_minimal()
+```
+
+Anche il grado di istruzione influenza la scelta di cambiare o meno la password per i propri servizi online. 
+
+
+```{r eval=TRUE}
+survey %>%
+  filter(country == "IT", as.numeric(education) != 6) %>% # remove education-refusal)
+  drop_na(education) %>%
+  pivot_longer(qc4_1:qc4_8, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("education", "question", "response")) %>%
+  group_by(education, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(education))) +
+  geom_bar(position = "dodge", stat="identity") +
+  scale_fill_discrete(name = "Servizio", labels = c("Email", "Social Network", "Acquisti online", "HomeBanking", "Altro", "Nessuno")) +
+  #scale_fill_discrete(name = "Servizio", labels = c("Email", "Social Network", "HomeBanking", "Altro", "Nessuno")) +
+  xlab("Grado di Istruzione") +
+  ylab("") +
+  theme_minimal()
+```
+
+## Le preoccupazioni relative ai problemi di sicurezza Le hanno fatto cambiare il suo uso di internet in qualcuno dei modi seguenti?
+
+
+Le preoccupazioni riguardo la privacy e la sicurezza online, hanno fatto cambiare il comportamento del 97% degli intervistati. Il 12% non apre mail provenienti da sconosciuti, ha installato un software antivirus (11%) o visita solo siti che conosce (11%). 
+
+
+```{r, eval=FALSE}
+
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(qc5_17) %>%
+  group_by(qc5_17) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+
+
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc5_1:qc5_18, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%
+  mutate(percent = count / sum(count) * 100) %>%
+  arrange(desc(percent)) # order by count
+```
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc5_1:qc5_18, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>% # Count how many are there for each combination of ID and TARG_AVG
+  filter(count > 125) %>%
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3), labels = c("Email da sconosciuti","Antivirus", "Siti sicuri", "Cambio password", "Uso pc personale", "Inserimenti dati personali", "Password diverse","Password complesse" )) + # avoid labels overlap
+  scale_fill_discrete(name = "Comportamento", labels = c("Cambio password", "Password complesse", "Inserimenti dati personali", "Siti sicuri", "Password diverse", "Email da sconosciuti", "Uso pc personale", "Antivirus")) +
+  xlab("") + 
+  ylab("Partecipanti")
+```
+
+Gli stessi cambiamenti si notano in tutte le fasce d'età
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc5_1:qc5_18, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:3) %>% # get top 3
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  scale_fill_discrete(name = "Comportamento", labels = c("Cambio password", "Siti sicuri", "Email da sconosciuti", "Antivirus")) +
+  xlab("Fasce d'età") +
+  ylab("") +
+  theme_minimal()
+```
+
+```{r}
+survey %>%
+  filter(country == "IT" , as.numeric(education) != 6) %>% # remove education-refusal) %>%
+  drop_na(education) %>%
+  pivot_longer(qc5_1:qc5_18, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("education", "question", "response")) %>%
+  group_by(education, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:3) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(education))) +
+  geom_bar(position = "dodge", stat="identity") +
+  scale_fill_discrete(name = "Comportamento", labels = c("Meno acquisti online", "Meno informazioni", "Siti sicuri", "Email da sconosciuti", "PC personale", "Antivirus")) +
+  xlab("Grado di Istruzione") +
+  ylab("") +
+  theme_minimal()
+```
+
+## Quanto si sente ben informato/a sui rischi dei crimini informatici?
+
+Il 40% degli intervistati reputa di essere abbastanza male informato sui rischi dei crimini informatici, ben il 28% reputa di essere molto male informato, solo 1% ritiene di essere molto bene informato 
+
+
+
+Younger, longer educated and more financially secure respondents are the most likely to feel well informed.
+
+
+
+As has been the case in past surveys, respondents’ views are fairly evenly divided. Just over half (52%) say they feel well informed, with 11% saying they feel very well informed. Almost half (47%) say they are not well informed about these risks, with 17% saying they are not at all informed.
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(informed) %>%
+  group_by(informed) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+```
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(informed) %>%
+  group_by(informed) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(y=count, x=informed, fill=factor(informed))) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  geom_bar(stat="identity") +
+  labs(
+    x = "",
+    y = "Partecipanti",
+    fill = ""
+  )
+  theme_minimal()
+```
+
+Le fasce di età più giovani (15-34) sono quelle che ritengono di essere abbastanza bene informate, mentre la fascia 65 e oltre reputa di essere molto male informata.
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  drop_na(informed) %>%
+  group_by(age_category, informed) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = age_category, y = count, fill = factor(informed))) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  labs(
+    x = "Fasce d'età",
+    y = "Partecipanti",
+    fill = ""
+  )
+  
+```
+Gli intervistati con un basso grado di istruzione di sentono molto male informati sui crimini informatici, mentre solo chi sta ancora studiando ritiene di essere abbastanza bene informato.
+
+
+```{r}
+survey %>%
+  filter(country == "IT", as.numeric(education) != 6) %>% # remove education-refusal
+  drop_na(education, informed) %>%
+  group_by(education, informed) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = education, y = count, fill = factor(informed))) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  labs(
+    x = "Grado di istruzione",
+    y = "Partecipanti",
+    fill = ""
+  )
+```
+
+
+## Preoccupazione per i crimini informatici
+
+La maggioranza degli intervistati sono preoccupati di essere vittime di un crimine informatico. Oltre due terzi è preoccupato dalla possibilità che il proprio dispositivo venga infettato da software dannosi (73%), che qualcuno rubi i dati personali e agisca al loro posto (70%), di essere vittime di frodi online legate alla carta di credito o a transazioni bancarie online (69%), di non riuscire ad accedere ai servizi online come i servizi bancari e i servizi pubblici (69%) oppure di subire un attacco hacker all'account e‐mail o all'account su social network (68%).
+ 
+ 
+```{r}
+library(scales)
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc8_1:qc8_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  mutate(response = case_when ( # Move from 5 to 3 levels of concern
+    response <= 2 ~ 2,
+    between(response, 3, 4) ~ 4,
+    response == 5 ~ 5
+  )) %>%
+  group_by(question, response) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  arrange(desc(percent)) %>% # Order by percent
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc8_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "qc8_2" ~ "Frode acquisti online",
+    question == "qc8_3" ~ "Attacchi informatici DoS a banche o servizi\npubblici",
+    question == "qc8_4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "qc8_5" ~ "Furto di identità",
+    question == "qc8_6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "qc8_7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "qc8_8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "qc8_9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "qc8_10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
+  ggplot(aes(x = question, y = count, fill = factor(response))) +
+  geom_bar(stat='identity', position = position_fill(reverse = TRUE), lwd=1, color="white") + # add space between stack
+  geom_text(aes(label = percent(percent, accuracy = 1L, suffix = "",)), position = position_fill(reverse = TRUE, vjust = 0.6), size = 3, color = "white") + # remove % symbol and integer value
+  coord_flip() +
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x=element_blank()) +
+  scale_fill_discrete(name = "", labels = c("Preoccupato", "non preoccupato", "Non sa"))
+```
+  
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc8_1:qc8_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response", "education")) %>%
+  mutate(response = case_when ( # Move from 5 to 3 levels of concern
+    response <= 2 ~ 2,
+    between(response, 3, 4) ~ 4,
+    response == 5 ~ 5
+  )) %>%
+  group_by(question, response, education) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  arrange(desc(percent)) %>% # Order by percent
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc8_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "qc8_2" ~ "Frode acquisti online",
+    question == "qc8_3" ~ "Attacchi informatici DoS a banche o servizi\npubblici",
+    question == "qc8_4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "qc8_5" ~ "Furto di identità",
+    question == "qc8_6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "qc8_7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "qc8_8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "qc8_9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "qc8_10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
+  filter(response == 2) %>%
+  ggplot(aes(x = question, y = count, fill = factor(education))) +
+  geom_bar(stat='identity', position = "dodge", lwd=1, color="white") + # add space between stack
+  geom_text(aes(label = percent(percent, accuracy = 1L, suffix = "",)), position = position_fill(reverse = TRUE, vjust = 0.6), size = 3, color = "white") + # remove % symbol and integer value
+  coord_flip() +
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x=element_blank())
+  #scale_fill_discrete(name = "", labels = c("Preoccupato", "non preoccupato", "Non sa"))
+```  
+  
+  
+  
+  
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc8_1:qc8_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  xlab("Frequency of Father Visits") + 
+  ylab("Percent of Children")
+```
+
+
+```{r eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc8_1:qc8_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Grado di istruzione") +
+  ylab("") +
+  theme_minimal()
+```
+
+
+IV. FIGHTING CYBERCRIME
+This chapter considers respondents personal experience of cybercrime, as well as their awareness of other people who have experienced cybercrime. The actions taken by victims of cybercrime are also discussed. The final section of this chapter explores the actions taken to protect children from online harassment when they are online.
+
+
+## Negli ultimi tre anni, con quale frequenza ha vissuto o è stato/a vittima di ciascuna delle seguenti situazioni? (da rivedere)
+
+Negli ultimi tre anni solo una minima parte degli intervistati sono state vittime di crimini informatici: il più diffuso è stato la ricezione di e‐mail o telefonate fraudolente con le quali si chiedono i dati personali (26%). A seguire la scoperta di software dannosi (virus, ecc.) sul proprio dispositivo (22%), ma sono gli unici *crimini* segnalati da almeno un intervistato su cinque. 
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question, response) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  arrange(desc(percent)) %>% # Order by percent
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc9_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "qc9_2" ~ "Frode acquisti online",
+    question == "qc9_3" ~ "Attacchi informatici DoS a banche o servizi\npubblici",
+    question == "qc9_4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "qc9_5" ~ "Furto di identità",
+    question == "qc9_6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "qc9_7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "qc9_8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "qc9_9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "qc9_10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
+  ggplot(aes(x = question, y = count, fill = factor(response))) +
+  geom_bar(stat='identity', position = position_fill(reverse = TRUE), lwd=1, color="white") + # add space between stack
+  geom_text(aes(label = percent(percent, accuracy = 1L, suffix = "",)), position = position_fill(reverse = TRUE, vjust = 0.5), size = 3, color = "white") + # remove % symbol and integer value
+  coord_flip() +
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x=element_blank()) +
+  scale_fill_discrete(name = "", labels = c("1", "2 o 3", ">3", "Mai", "Non so"))
+```
+
+Gli uomini, in generale, segnalano di esser stati vittime di crimini informatica, ad esempio il 12% dicedi aver scoperto software dannosi (virus, ecc.) installati nei propri dispositivi rispetto alle donne (9%).
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response", "gender")) %>%
+  group_by(question, response, gender) %>%
+  mutate(response = case_when ( # Move from 5 to 3 levels of concern
+    response <= 3 ~ 3,
+    response == 4 ~ 4,
+    response == 5 ~ 5
+  )) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  arrange(desc(percent)) %>% # Order by percent
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc9_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "qc9_2" ~ "Frode acquisti online",
+    question == "qc9_3" ~ "Attacchi informatici DoS a banche o servizi\npubblici",
+    question == "qc9_4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "qc9_5" ~ "Furto di identità",
+    question == "qc9_6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "qc9_7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "qc9_8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "qc9_9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "qc9_10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
+  filter(response == 3) %>%
+  ggplot(aes(x = question, y = count, fill = factor(gender))) +
+  geom_bar(stat='identity', position = "dodge") + # add space between stack
+  geom_text(aes(label = percent(percent, accuracy = 0.1)), hjust = 1.1, position = position_dodge(width = 1), size = 3, color = "black") + # remove % symbol and integer value
+  coord_flip() +
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x=element_blank()) +
+  labs(fill = "Genere")
+  #scale_fill_discrete(name = "", labels = c("1", "2 o 3", ">3", "Mai", "Non so"))
+```
+
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  xlab("Frequency of Father Visits") + 
+  ylab("Percent of Children")
+```
+
+
+
+```{r eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Grado di istruzione") +
+  ylab("") +
+  theme_minimal()
+```
+
+
+
+## Che cosa ha fatto in ognuna delle situazioni che ha vissuto personalmente o di cui è stato/a vittima?
+
+
+```{r}
+library(scales)
+survey %>%
+  filter(country == "IT") %>%
+  #select(qc11_1_1, qc11_1t, qc11_1_8)
+  #pivot_longer(qc11_1t:qc11_10t, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(starts_with("qc11") & ends_with(c("_1","_8","t"))) %>%
+  rename_with(~ gsub('t$', '-action', .x)) %>%
+  rename_with(~ gsub('_1$', '-none', .x)) %>%
+  rename_with(~ gsub('_8$', '-unknown', .x)) %>%
+  #summarize(count = n())
+  #summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>%
+  #summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE))) %>%
+  pivot_longer(
+    starts_with("qc11"),
+        names_to = c("question", "response"),
+    names_sep = "-",
+    values_to = "value"
+  ) %>%
+  drop_na() %>%
+  filter(value != 0) %>%
+  group_by(question) %>%
+  mutate(total= n()) %>% 
+  ungroup %>%
+  group_by(question, response, total) %>%
+  summarise(count = n()) %>%
+  #pivot_wider(names_from = "type", values_from = "score") %>%
+  mutate(percent = count / total) %>% # HACK: create a variable to use with geom_text-percent aes
+  #arrange(desc(count)) %>% # Order by percent
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc11_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "qc11_2" ~ "Frode acquisti online",
+    question == "qc11_3" ~ "Attacchi informatici DoS a banche o servizi\npubblici",
+    question == "qc11_4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "qc11_5" ~ "Furto di identità",
+    question == "qc11_6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "qc11_7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "qc11_8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "qc11_9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "qc11_10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
+  ggplot(aes(x = question, y = count, fill = factor(response))) +
+  geom_bar(stat='identity', position = position_fill(reverse = TRUE), lwd=1, color="white") + # add space between stack
+  geom_text(aes(label = percent(percent, accuracy = 1L, suffix = "",)), position = position_fill(reverse = TRUE, vjust = 0.6), size = 3, color = "white") + # remove % symbol and integer value
+  coord_flip() +
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x=element_blank()) +
+  scale_fill_discrete(name = "", labels = c("Almeno un azione", "Niente", "Non sa"))
+```
+
+
+```{r}
+library(scales)
+survey %>%
+  filter(country == "IT") %>%
+  #select(qc11_1_1, qc11_1t, qc11_1_8)
+  #pivot_longer(qc11_1t:qc11_10t, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  #select(starts_with("qc11_[3569]") & !ends_with("t")) %>%
+  select(matches("qc11_[3569]") & !ends_with("t")) %>%
+  rename_with(~ gsub('qc11_(\\d+)', '\\1', .x)) %>%
+  pivot_longer(
+    cols = matches("\\d+_\\d+"),
+        names_to = c("question", "response"),
+    names_sep = "_",
+    values_to = "value"
+  ) %>%
+  drop_na() %>% 
+  filter(value != 0) %>%
+  group_by(question) %>%
+  mutate(total= n()) %>% 
+  ungroup %>%
+  group_by(question, response, total) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / total) %>% # HACK: create a variable to use with geom_text-percent aes
+  mutate(question = case_when( # Rename question code to question text
+    question == "1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "2" ~ "Frode acquisti online",
+    question == "3" ~ "Attacchi informatici DoS a banche o servizi\npubblici",
+    question == "4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "5" ~ "Furto di identità",
+    question == "6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
+  mutate(response = case_when( # Rename question code to question text
+    response == "1" ~ "Niente",
+    response == "2" ~ "Si è rivolto/a alla polizia",
+    response == "3" ~ "Ha contattato il sito web/fornitore",
+    response == "4" ~ "Ha contattato il Suo fornitore di\nservizi Internet",
+    response == "5" ~ "Ha contattato un'associazione di\ntutela dei consumatori",
+    response == "6" ~ "Ha segnalato la situazione attraverso\nun sito web o un indirizzo email ufficiale",
+    response == "7" ~ "Altro",
+    response == "8" ~ "Non sa"
+  )) %>%
+  ggplot(aes(x = percent, y = response, fill=factor(response))) +
+  geom_bar(stat='identity') +
+  geom_text(aes(label = percent(percent, accuracy = 1L, suffix = "")), position = "dodge",hjust = 1.3, size = 3, color = "white") + # remove % symbol and integer value) 
+  facet_wrap(.~question) +
+  #coord_flip()
+  theme(legend.position="bottom",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank())
+  #ggplot(aes(x = question, y = count, fill = factor(response))) +
+  #geom_bar(stat='identity', position = position_fill(reverse = TRUE), lwd=1, color="white") + # add space between stack
+  #geom_text(aes(label = percent(percent, accuracy = 1L, suffix = "",)), position = position_fill(reverse = TRUE, vjust = 0.6), size = 3, color = "white") + # remove % symbol and integer value
+  #coord_flip() +
+  #theme(legend.position="bottom",
+   #     axis.title.x = element_blank(),
+  #      axis.title.y = element_blank(),
+  #      axis.text.x=element_blank())
+  #scale_fill_discrete(name = "", labels = c("Almeno un azione", "Niente", "Non sa"))
+```
+
+
+
+
+## Lei è a conoscenza dell'esistenza di un sito Web, un indirizzo e‐mail, un modulo online o un numero di telefono in Italia che può usare per segnalare un crimine informatico o qualsiasi altro comportamento illegale online (ad es. attacchi informatici, bullismo o molestie online)?
+
+Solo il 22% degli intervistati è a conoscenza di un modo per segnalare un crimine informatico o qualsiasi altro comportamento illegale online. Un numero di telefono (26%) è il modo più conosciuto, seguito da altro metodi per segnalare (23%) mentre solo un intervistato su 5 conosce un sito web.
+
+
+```{r, eval=FALSE}
+
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(qc13t) %>%
+  group_by(qc13t) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+
+
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%
+  mutate(percent = count / sum(count) * 100) %>%
+  arrange(desc(percent)) # order by count
+```
+
+
+
+```{r, eval=FALSE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(qc13t) %>%
+  group_by(qc13t) %>%
+  summarise(count = n()) %>%
+  mutate(all = sum(count), 
+     per = paste0(round(100 * count/all, 2), "%")) %>%
+  # Piechart
+  ggplot(aes(x="", y=count, fill=factor(qc13t))) +
+  geom_bar(stat="identity", width=1, color="white") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  # Add percent value on piechart
+  geom_text(aes(label = per), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Zona di residenza")
+```
+
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3), labels = c("Numero di telefono","Altro", "Sito Web", "Modulo online", "Indirizzo e-mail")) + # avoid labels overlap
+  scale_fill_discrete(name = "Metodo", labels = c("Sito Web", "Indirizzo e-mail", "Modulo online", "Numero di telefono", "Altro", "Nessuno")) +
+  xlab("") + 
+  ylab("Partecipanti")
+```
+
+
+```{r eval=TRUE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Grado di istruzione") +
+  ylab("") +
+  theme_minimal()
+```
+
+
+## Lei ha mai segnalato un crimine informatico o qualsiasi altro comportamento illegale online (ad es. attacchi informatici, bullismo o molestie online)?
+
+```{r, echo=FALSE}
+survey %>%
+   filter(country == "IT") %>%
+  drop_na(qc14t) %>%
+  group_by(qc14t) %>%
+  summarise(count = n()) %>%
+  mutate(all = sum(count), 
+     per = paste0(round(100 * count/all, 2), "%")) %>%
+  # Piechart
+  ggplot(aes(x="", y=count, fill=factor(qc14t))) +
+  geom_bar(stat="identity", width=1, color="white") +
+  coord_polar("y", start=0) +
+  theme_void() +
+  # Add percent value on piechart
+  geom_text(aes(label = per), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Zona di residenza")
+```
+A chi ha segnalato conosce ?
+
+```{r}
+survey %>%
+  filter(country == "IT") %>%
+  pivot_longer(qc14_1:qc14_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  xlab("Frequency of Father Visits") + 
+  ylab("Percent of Children")
+```
+
+```{r eval=TRUE}
+survey %>%
+  filter(country == "IT") %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc14_1:qc14_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4 
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Grado di istruzione") +
+  ylab("") +
+  theme_minimal()
+```
+
+
+
+
+## CONCLUSION
+The results of the current survey show that Internet use in Europe continues to grow, particularly via smartphones. Not only is the use of Internet still increasing, but respondents are also increasingly using the Internet every day for socialising, communication, and online shopping and banking. Increasing time online potentially increases the risk of being a victim of cybercrime.
+Respondents say they are aware of potential dangers online. Concerns about online privacy and security have already led more than nine in ten Internet users to change their online behaviour – most often by not opening emails from unknown persons, installing anti-virus software, only visiting known and trusted websites and only using their own computer. In addition, a large majority have changed at least one online password in the last 12 months, and particularly for email, online banking or social network. However, there is a clear socio-demographic divide in these results, with those under the age of 55 and those with higher education levels the most likely to have changed their behaviour.
+Although awareness of the increasing risks of falling victim to a cybercrime are increasing, respondents are less likely to feel well informed about these crimes or feel able to protect themselves. Even though just over half say they feel well informed about cybercrime, since 2018 the proportion who think they can protect themselves from it has declined by nine points to just over half. However, once again there are clear demographic differences, with younger and longer educated respondents more likely to feel informed about cybercrime and more confident they can protect themselves online. As has been the case in previous surveys, respondents in countries with high levels of daily Internet use also have higher proportions who feel well-informed about the risks.
+
+
+
+Almost all respondents have changed their online behaviour in some way as a result of privacy and security concerns
+
+
+## Over half feel well informed about cybercrime, but there are large variations across Member States
+
+## The majority feel informed about the risks of cybercrime, but confidence about being able to protect themselves is falling
+
+## The majority are concerned about becoming victim of cybercrime, although personal experience of cybercrime varies across countries
+
+## Fewer than one in five have reported a cybercrime or illegal online behaviour
+
+
+
+
+```{r eval=FALSE}
+survey %>% 
+  dplyr::pull(d11r2) %>% 
+  str(.)
+
+
+df_new
+
+df_new %>% 
+  mutate(gender = na_if(gender, "F"))
+
+df_new["gender"]
+
+df_new %>%  group_by(country, d25) %>% 
+       summarise(count = n()) %>% 
+       ungroup()
+       spread(d25, count) %>% 
+
+
+
+df_new %>% filter(d25 != 8) %>%
+  group_by(country, d25) %>% 
+       summarise(count = n()) %>% 
+       spread(d25, count) %>% 
+       ungroup() %>%
+  ggplot(aes(x = country, y= count)) + 
+  geom_bar(stat = "identity") +
+  theme_minimal()
+
+
+aa
+
+# bisogna usare factor su d25 perchè è in formato haven_labelled
+
+df_new %>% filter(d25 != 8) %>%
+  group_by(d25, country) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  ggplot(aes(y=count, x=country, fill=factor(d25))) + 
+    geom_bar(position="fill", stat="identity") +
+  ggtitle("Studying 4 species..") +
+        ylab("") + 
+  theme_minimal()
+
+
+
+#attr(*, "names")= chr [1:4] "Rural area or village" "Small or middle sized town" "Large town" "DK"
+df_new %>% 
+  dplyr::pull(d25) %>% 
+  str(.)
+
+
+
+df_new %>%
+  filter(d25 != 8) %>%
+
+df_new %>% 
+  ggplot(aes(x = d25, y = count, fill = country)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  xlab("Frequency of Father Visits") + 
+  ylab("Percent of Children")
+
+df_new %>%
+  group_by(country) %>%
+  filter(d25 != 8) %>%
+  ggplot(aes(x = country, y = , fill = country)) + 
   geom_bar(stat = "identity") +
   geom_text(aes(label=ifelse(country == "IT", ceiling(mean_age), " ")), vjust=-1.3, size=3.5) +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) +
@@ -78,20 +1501,15 @@ df_new %>%
     y = "Età"
   ) +
   theme_minimal()
-```
 
-in linea con quella gli intervistati italiani. I partecipanti del nostro paese sono  
 
-```{r}
-# The above adds a redundant legend. With the legend removed:
+
 df_new %>%
-  filter(country == "IT") %>%
-  ggplot(aes(x=gender, y=age, fill=gender)) + 
-  geom_boxplot() +
-  labs(x = "Sesso") + 
-  labs(y = "Età") + 
-    guides(fill=FALSE)
+  mutate(d25 = as_factor(d25))
+
 ```
+
+
 
 ***
 
@@ -152,39 +1570,4 @@ QC11 Che cosa ha fatto in ognuna delle situazioni che ha vissuto personalmente o
 QC14 Lei ha mai segnalato un crimine informatico o qualsiasi altro comportamento illegale online (ad es. attacchi informatici, bullismo o molestie online)?
 QC15 Potrebbe dirmi quanto è d'accordo o in disaccordo con ciascuna delle seguenti affermazioni?
 
-D8R2
-
-livello di studio
-1 basso
-2 medio
-3 alto
-4 rifiuta
-5 buuu
-7 studia ancora 
-8 NA (non sa)
-
-SE "STUDIA ANCORA", CODIFICARE '00' ‐ SE "NESSUN TITOLO DI STUDIO" CODIFICARE '01' ‐ SE "RIFIUTA" CODIFICARE '98' ‐ SE "NON SA" CODIFICARE '99'
-
-
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
-
-## Slide with Bullets
-
-- Bullet 1
-- Bullet 2
-- Bullet 3
-
-## Slide with R Output
-
-```{r cars, echo = TRUE}
-summary(cars)
-```
-
-## Slide with Plot
-
-```{r pressure}
-plot(pressure)
-```
 

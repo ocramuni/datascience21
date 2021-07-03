@@ -4,4 +4,5 @@
 .Ruserdata
 .DS_Store
 progetto_cache/
+progetto_files/
 data/*.dta

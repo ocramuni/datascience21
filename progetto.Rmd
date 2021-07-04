@@ -206,7 +206,7 @@ I risultati della ricerca sono stati pubblicati a gennaio 2020: diamo uno sguard
 
 L'età media dei partecipanti è 51 anni, con una leggera maggioranza di donne (51%). 
 
-```{r gender_percent, eval=FALSE}
+```{r age_percent, eval=FALSE}
 survey %>%
   drop_na(gender) %>%
   group_by(gender) %>%
@@ -216,7 +216,7 @@ survey %>%
 
 La differenza di genere è minima fino ai 44 anni, poi nella fascia 45-64 abbiamo la maggioranza di partecipanti donne ed infine un maggioranza di uomini nella fascia 65 e oltre.
 
-```{r gender}
+```{r age}
 survey %>%
   drop_na(age_category) %>%
   group_by(age_category, gender) %>% 
@@ -307,7 +307,7 @@ right_join(istat, tmp_region, by = c("DEN_REG" = "region")) %>%
 
 Il 40% degli intervistati ha completato la scuola secondaria di secondo grado. 
 
-```{r education percent, eval=FALSE}
+```{r education_percent, eval=FALSE}
 survey %>%
   drop_na(education) %>%
   group_by(education) %>%
@@ -476,7 +476,7 @@ survey %>%
 
 L'uso dei social network viene sostituito dalle operazioni di home banking per gli intervistati con età superiore di 55 anni.
 
-```{r behaviour_age}
+```{r activities_age}
 survey %>%
   drop_na(age_category) %>%
   pivot_longer(qc2_1:qc2_14, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
@@ -1267,7 +1267,7 @@ survey %>%
 ```
 
 
-```{r method_age, eval=FALSE}
+```{r aware_age, eval=FALSE}
 survey %>%
   drop_na(age_category) %>%
   pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%

@@ -16,3 +16,7 @@ slides > slide {
 slides > slide:not(.nobackground):after {
   content: '';
 }
+
+slides > slide:not(.nobackground):before {
+  background: none;
+}

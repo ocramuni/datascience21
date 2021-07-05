@@ -9,6 +9,7 @@ output:
     css: styles/style.css
     widescreen: true
     incremental: yes
+    logo: imgs/logo_uniud.png
 ---
 
 ```{r setup, include=FALSE}
@@ -193,14 +194,13 @@ load("output/survey.rda")
 
 ## Questionario - Eurobarometer 92.2
 
-Tra l'8 e il 22 Ottobre 2019 la Commissione Europea ha sottoposto a 27,607 cittadini dei 28 stati membri dell' Unione un questionario[^1] per comprendere la consapevolezza, l'esperienza e la percezione nei confronti della sicurezza informatica: i cittadini italiani intervistati sono stati `r nrow(survey)`, di età compresa tra `r min(survey$age)` e `r max(survey$age)` anni.
+Tra l'8 e il 22 Ottobre 2019 la Commissione Europea ha sottoposto a 27,607 cittadini dei 28 stati membri dell' Unione un [questionario](https://europa.eu/eurobarometer/surveys/detail/2249) per comprendere la consapevolezza, l'esperienza e la percezione nei confronti della sicurezza informatica: i cittadini italiani intervistati sono stati `r nrow(survey)`, di età compresa tra `r min(survey$age)` e `r max(survey$age)` anni.
 
-Le domande riguardavano vari aspetti della vita *digitale* dei cittadini: dai dispositivi usati per accedere ad Internet, alle preoccupazioni sull'utilizzo dell'home banking o degli acquisti online, dai crimini di cui sono stati vittime, alla conoscenza di metodi per segnalare abusi.
+Le domande riguardavano vari aspetti della vita *digitale* dei cittadini: dai dispositivi usati per accedere ad Internet, alle preoccupazioni sull'utilizzo dell'home banking o l'acquisto online, dai crimini di cui sono stati vittime, alla conoscenza di metodi per segnalare abusi.
 
 I risultati della ricerca sono stati pubblicati a gennaio 2020: diamo uno sguardo più approfondito all'atteggiamento degli italiani.
 
-[^1]: https://europa.eu/eurobarometer/surveys/detail/2249 "Eurobarometer 92.2"
-
+# Intervistati
 
 ## Età
 
@@ -222,7 +222,7 @@ survey %>%
   group_by(age_category, gender) %>% 
   summarise(count = n()) %>% 
   ggplot(aes(x = age_category, y = count, fill = gender)) +
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), colour="lightgrey") +
   scale_fill_brewer(palette="Set2") +
   labs(
     x = "Età",
@@ -231,8 +231,6 @@ survey %>%
   ) +
   theme_minimal()
 ```
-
-
 
 ## Dove vivono
 
@@ -265,7 +263,7 @@ survey %>%
          percent = paste0(round(100 * count/all, 2), "%")) %>%
   # Piechart
   ggplot(aes(x="", y=count, fill=community)) +
-  geom_bar(stat="identity", width=1, color="white") +
+  geom_bar(stat="identity", width=1, color="lightgrey") +
   scale_fill_brewer(palette="Set2") +
   coord_polar("y", start=0) +
   theme_void() +
@@ -299,7 +297,7 @@ right_join(istat, tmp_region, by = c("DEN_REG" = "region")) %>%
   geom_sf(col = "black") +
   geom_sf_text(aes(label = count), size = 3) +
   scale_fill_distiller(palette = "YlOrRd", direction = 1) +
-  labs(x = NULL, y = NULL, fill = "Partecipanti") +
+  labs(x = NULL, y = NULL, fill = "Intervistati") +
   theme_void() # Empty theme
 ```
 
@@ -323,7 +321,7 @@ survey %>%
   summarise(count = n()) %>%
   filter(count > 10) %>%
   ggplot(aes(y=count, x=education, fill=factor(education))) + # factor is needed because education format is haven_labelled
-  geom_bar(stat="identity") +
+  geom_bar(stat="identity", color="lightgrey") +
   scale_fill_brewer(palette="Set2") +
   ggtitle("") +
   guides(fill="none") + # remove legend
@@ -331,6 +329,9 @@ survey %>%
   ylab("Intervistati") + 
   theme_minimal()
 ```
+
+
+# Uso di Internet
 
 ## Frequenza collegamento Internet
 
@@ -350,7 +351,7 @@ survey %>%
   summarise(count = n()) %>%
   filter(count > 25) %>%
   ggplot(aes(x = internet, y = count, fill = factor(internet))) +
-  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_fill_brewer(palette="Set2") +
   guides(fill="none") + # remove legend
   xlab("Frequenza di connesione ad internet") + 
@@ -367,7 +368,7 @@ survey %>%
   group_by(age_category, internet) %>% 
   summarise(count = n()) %>%
   ggplot(aes(fill=internet, y=count, x=age_category)) + 
-  geom_bar(position="stack", stat="identity") +
+  geom_bar(position="stack", stat="identity", color="lightgrey") +
   scale_fill_brewer(palette="Set2") +
   labs(
     x = "Età",
@@ -388,7 +389,7 @@ survey %>%
   summarise(count = n()) %>% 
   #mutate(percent = count / sum(count) * 100)
   ggplot(aes(fill=internet, y=count, x=education)) + 
-  geom_bar(position="stack", stat="identity") +
+  geom_bar(position="stack", stat="identity", color="lightgrey") +
   scale_fill_brewer(palette="Set2") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   labs(
@@ -400,10 +401,9 @@ survey %>%
   theme(axis.text.y = element_blank())
 ```
 
-
 ## Strumento utilizzato
 
-Lo smartphone è lo strumento più usato per connettersi ad internet (40%), seguito dal computer desktop (27%).
+Lo smartphone è lo strumento più usato per connettersi ad internet (40%), seguito dal personal computer (27%).
 
 ```{r devices}
 survey %>%
@@ -422,7 +422,7 @@ survey %>%
   )) %>%
   #mutate(percent = count / sum(count) * 100)
   ggplot(aes(x = question, y = count, fill = question)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_fill_brewer(name = "Strumento", palette="Set2") +
   xlab("") +
   ylab("Intervistati") +
@@ -466,7 +466,7 @@ survey %>%
   )) %>%
   filter(count > 200) %>%
   ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="darkgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) +
   scale_fill_brewer(name = "Attività", palette="Set3") +
   xlab("") + 
@@ -502,7 +502,7 @@ survey %>%
     question == "qc2_14" ~ "Non so",
   )) %>%
   ggplot(aes(fill=question, y=count, x=factor(age_category))) +
-  geom_bar(position = "dodge", stat="identity") +
+  geom_bar(position = "dodge", stat="identity", color="darkgrey") +
   scale_fill_brewer(name = "Attività", palette="Set3") +
   xlab("Età") +
   ylab("") +
@@ -510,9 +510,11 @@ survey %>%
 
 ```
 
-## Principali preoccupazioni
+# Proccupazioni nell'uso di Internet
 
-La sicurezza dei pagamenti (27%) e l'uso improprio dei dati personali (27%) sono le principali preoccupazioni degli intervistati quando effettuano operazioni bancarie o acquistano beni e servizi.
+## Pagamenti online
+
+La sicurezza dei pagamenti (27%) e l'uso improprio dei dati personali (27%) sono le principali preoccupazioni degli intervistati quando effettuano pagamenti online per l'acquisto di beni o servizi.
 
 
 ```{r concerns_percent, eval=FALSE}
@@ -541,7 +543,7 @@ survey %>%
     question == "qc3_7" ~ "Nessuna",
   )) %>%
   ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = "Preoccupazione", palette="Set2") +
   xlab("") + 
@@ -588,7 +590,7 @@ survey %>%
     question == "qc4_9" ~ "Non so",
   )) %>%
   ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = "Servizio", palette="Set2") +
   xlab("") + 
@@ -619,7 +621,7 @@ survey %>%
   arrange(desc(count)) %>% # Order by count
   slice(1:4) %>% # Get top 4
   ggplot(aes(fill=question, y=count, x=factor(age_category))) +
-  geom_bar(position = "dodge", stat="identity") +
+  geom_bar(position = "dodge", stat="identity", color="lightgrey") +
   scale_fill_brewer(name = "Servizio", palette="Set2") +
   xlab("età") +
   ylab("") +
@@ -650,19 +652,18 @@ survey %>%
   arrange(desc(count)) %>% # Order by count
   slice(1:4) %>% # Get top 4
   ggplot(aes(fill=question, y=count, x=factor(education))) +
-  geom_bar(position = "dodge", stat="identity") +
+  geom_bar(position = "dodge", stat="identity", color="lightgrey") +
   scale_fill_brewer(name = "Servizio", palette="Set2") +
   xlab("Grado di Istruzione") +
   ylab("") +
   theme_minimal()
 ```
 
-## Cambio nel comportamento
+## Comportamento online
 
 Le preoccupazioni riguardo la privacy e la sicurezza online, hanno fatto cambiare il comportamento del 97% degli intervistati. Il 12% non apre mail provenienti da sconosciuti, ha installato un software antivirus (11%) o visita solo siti che conosce (11%). 
 
 ```{r action_percent, eval=FALSE}
-
 survey %>%
   drop_na(qc5_17) %>%
   group_by(qc5_17) %>%
@@ -697,7 +698,7 @@ survey %>%
     question == "qc5_12" ~ "Password complesse",
   )) %>%
   ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = "Comportamento", palette="Set2") +
   xlab("") + 
@@ -706,9 +707,11 @@ survey %>%
 ```
 
 
+# Conoscenza e preoccupazioni
+
 ## Livello di conoscenza
 
-Il 40% degli intervistati reputa di essere non essere abbastanza informato sui rischi dei crimini informatici, addirittura il 28% reputa di essere molto poco informato mentre solo 1% ritiene di essere bene informato.
+Il 40% degli intervistati reputa di non essere abbastanza informato sui rischi dei crimini informatici, addirittura il 28% reputa di essere molto poco informato mentre solo poco più dell'1% ritiene di essere bene informato.
  
 ```{r informed_percent, eval=FALSE}
 survey %>%
@@ -727,7 +730,7 @@ survey %>%
   ggplot(aes(y=count, x=informed, fill=factor(informed))) +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = NULL, palette="Set2") +
-  geom_bar(stat="identity") +
+  geom_bar(stat="identity", color="lightgrey") +
   labs(
     x = "",
     y = "Intervistati",
@@ -745,7 +748,7 @@ survey %>%
   group_by(age_category, informed) %>% 
   summarise(count = n()) %>% 
   ggplot(aes(x = age_category, y = count, fill = factor(informed))) +
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = NULL, palette="Set2") +
   labs(
@@ -765,7 +768,7 @@ survey %>%
   group_by(education, informed) %>% 
   summarise(count = n()) %>% 
   ggplot(aes(x = education, y = count, fill = factor(informed))) +
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = NULL, palette="Set2") +
   labs(
@@ -776,6 +779,111 @@ survey %>%
   theme_minimal()
 ```
 
+## Conoscenza canali ufficiali
+
+Solo il 22% degli intervistati è a conoscenza dei canali ufficiali per segnalare un crimine informatico o qualsiasi altro comportamento illegale online. Un numero di telefono (26%) è il modo più conosciuto, seguito da altro metodi (23%) mentre solo un intervistato su cinque conosce il [sito web ufficiale](https://denunceviaweb.poliziadistato.it/polposta).
+
+
+```{r aware_percent, eval=FALSE}
+survey %>%
+  drop_na(qc13t) %>%
+  group_by(qc13t) %>%
+  summarise(count = n()) %>%
+  mutate(percent = count / sum(count) * 100)
+
+survey %>%
+  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%
+  mutate(percent = count / sum(count) * 100) %>%
+  arrange(desc(percent)) # order by count
+```
+
+
+```{r aware}
+survey %>%
+  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>%
+  summarise(count = length(which(response==1))) %>%
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc13_1" ~ "Sito Web",
+    question == "qc13_2" ~ "Indirizzo email",
+    question == "qc13_3" ~ "Modulo online",
+    question == "qc13_4" ~ "Numero di telefono",
+    question == "qc13_5" ~ "Altro",
+  )) %>%
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
+  scale_fill_brewer(name = "Metodo", palette="Set2") +
+  xlab("") +
+  ylab("Intervistati") +
+  theme_minimal()
+```
+
+
+```{r aware_age, eval=FALSE}
+survey %>%
+  drop_na(age_category) %>%
+  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("age_category", "question", "response")) %>%
+  group_by(age_category, question) %>% # Group by ID and TARG_AVG
+  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
+  arrange(desc(count)) %>% # order by count
+  slice(1:4) %>% # get top 4
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc13_1" ~ "Sito Web",
+    question == "qc13_2" ~ "Indirizzo email",
+    question == "qc13_3" ~ "Modulo online",
+    question == "qc13_4" ~ "Numero di telefono",
+    question == "qc13_5" ~ "Altro",
+  )) %>%
+  # Grouped
+  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
+  geom_bar(position = "dodge", stat="identity", color="lightgrey") +
+  scale_fill_brewer(name = "Metodo", palette="Set2") +
+  xlab("Età") +
+  ylab("Intervistati") +
+  theme_minimal()
+```
+
+
+## Azioni per tutelarsi
+
+Anche se un intervistato su tre evita di comunicare informazioni personali online (31%), ben uno su cinque ha paura di diventare vittima di un crimine informatico (22%). Inoltre, solo un intervistato su dieci ritiene di essere in grado di tutelarsi adeguatamente contro i crimini informatici (9%).
+
+```{r}
+survey %>%
+  pivot_longer(qc15r_1:qc15r_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
+  select(c("question", "response")) %>%
+  group_by(question) %>%
+  summarise(count = length(which(response==1))) %>%
+  mutate(all = sum(count),
+         percent = ceiling(100 * count/all)) %>%
+  mutate(question = case_when( # Rename question code to question text
+    question == "qc15r_1" ~ "Informazioni personali online non siano\nconservate in modo sicuro dai siti web",
+    question == "qc15r_2" ~ "Informazioni personali online non siano\nconservate in modo sicuro dalle autorità pubbliche",
+    question == "qc15r_3" ~ "Evita di comunicare informazioni personali online",
+    question == "qc15r_4" ~ "Rischio di diventare vittima di un crimine\ninformatico sia in aumento",
+    question == "qc15r_5" ~ "In grado di tutelarsi adeguatamente contro\ni crimini informatici",
+  )) %>%
+  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
+  #geom_text(aes(label = percent, vjust = 1.8), size = 3, color="white") +
+  ylab("Intervistati") +
+  theme_minimal() +
+  guides(fill=guide_legend(ncol=2)) +
+  theme(legend.position="bottom",
+        legend.text = element_text(size = 9),
+        legend.box="vertical",
+        legend.margin=margin(),
+        axis.title.x = element_blank(),
+        axis.text.x=element_blank()) +
+  scale_fill_brewer(name = "", palette="Set2")
+
+```
 
 ## Preoccupazioni
 
@@ -792,9 +900,12 @@ survey %>%
     between(response, 3, 4) ~ 4,
     response == 5 ~ 5
   )) %>%
-  group_by(question, response) %>%
+  group_by(question) %>% # get total number of answers
+  mutate(total= n()) %>%
+  ungroup %>%
+  group_by(question, response, total) %>%
   summarise(count = n()) %>%
-  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  mutate(percent = count / total) %>% # HACK: create a variable to use with geom_text-percent aes
   arrange(desc(percent)) %>% # Order by percent
   mutate(question = case_when( # Rename question code to question text
     question == "qc8_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
@@ -829,9 +940,12 @@ survey %>%
     between(response, 3, 4) ~ 4,
     response == 5 ~ 5
   )) %>%
-  group_by(question, response, education) %>%
+  group_by(question) %>% # get total number of answers
+  mutate(total= n()) %>%
+  ungroup %>%
+  group_by(question, response, education, total) %>%
   summarise(count = n()) %>%
-  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  mutate(percent = count / total) %>% # HACK: create a variable to use with geom_text-percent aes
   arrange(desc(percent)) %>% # Order by percent
   mutate(question = case_when( # Rename question code to question text
     question == "qc8_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
@@ -890,17 +1004,22 @@ survey %>%
 ```
 
 
-## Frequenza crimini informatici
+# Esperienza dei crimini informatici
 
-Negli ultimi tre anni solo una minima parte degli intervistati è state vittima di crimini informatici: il più diffuso è stato la ricezione di e‐mail o telefonate fraudolente con le quali si chiedono i dati personali (26%). A seguire la scoperta di software dannosi (virus, ecc.) sul proprio dispositivo (22%), ma sono gli unici *crimini* segnalati da almeno un intervistato su cinque. 
+## Esperienze personali di crimini informatici
+
+Negli ultimi tre anni solo una minima parte degli intervistati è stata vittima di un crimine informatico: la ricezione di e‐mail o telefonate fraudolente con le quali si chiedono i dati personali (26%) è stato il più diffuso. A seguire la scoperta di software dannosi (virus, ecc.) sul proprio dispositivo (22%), ma sono gli unici *crimini* segnalati da almeno un intervistato su cinque. 
 
 ```{r victim}
 survey %>%
   pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
   select(c("question", "response")) %>%
-  group_by(question, response) %>%
+  group_by(question) %>% # get total number of answers
+  mutate(total= n()) %>%
+  ungroup %>%
+  group_by(question, response, total) %>%
   summarise(count = n()) %>%
-  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  mutate(percent = count / total) %>% # HACK: create a variable to use with geom_text-percent aes
   arrange(desc(percent)) %>% # Order by percent
   mutate(question = case_when( # Rename question code to question text
     question == "qc9_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
@@ -926,21 +1045,24 @@ survey %>%
   scale_fill_brewer(name = "", palette="Set2", labels = c("1", "2 o 3", ">3", "Mai", "Non so"))
 ```
 
-Gli uomini, in generale, hanno dichiarato di esser stati vittime di crimini informatici più delle donne: ad esempio il 12% ha dichiarato di aver scoperto software dannosi (virus, ecc.) installati nei propri dispositivi, rispetto al 9% delle donne.
+Gli uomini, in generale, sono stati vittime più delle donne: ad esempio il 12% ha scoperto software dannosi (virus, ecc.) installati nei propri dispositivi, rispetto al 9% delle donne.
 
 
 ```{r victim_gender}
 survey %>%
   pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
   select(c("question", "response", "gender")) %>%
-  group_by(question, response, gender) %>%
+  group_by(question) %>% # get total number of answers
+  mutate(total= n()) %>%
+  ungroup %>%
+  group_by(question, response, gender, total) %>%
   mutate(response = case_when ( # Move from 5 to 3 levels of concern
     response <= 3 ~ 3,
     response == 4 ~ 4,
     response == 5 ~ 5
   )) %>%
   summarise(count = n()) %>%
-  mutate(percent = count / 836) %>% # HACK: create a variable to use with geom_text-percent aes
+  mutate(percent = count / total) %>% # HACK: create a variable to use with geom_text-percent aes
   arrange(desc(percent)) %>% # Order by percent
   mutate(question = case_when( # Rename question code to question text
     question == "qc9_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
@@ -967,23 +1089,9 @@ survey %>%
   scale_fill_brewer(name = "Genere", palette="Set2")
 ```
 
+Il tipo di _crimine_ cambia per gli intervistati di 65 anni e oltre: sono più soggetti a frodi per acquisti online o al ritrovamento di materiale relativo ad abusi sessuali su minori.
 
-```{r, eval=FALSE}
-survey %>%
-  pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
-  select(c("question", "response")) %>%
-  group_by(question) %>% 
-  summarise(count = length(which(response==1))) %>%
-  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
-  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
-  xlab("Frequency of Father Visits") + 
-  ylab("Percent of Children")
-```
-
-
-
-```{r, eval=FALSE}
+```{r victim_age}
 survey %>%
   drop_na(age_category) %>%
   pivot_longer(qc9_1:qc9_10, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
@@ -991,12 +1099,30 @@ survey %>%
   group_by(age_category, question) %>%
   summarise(count = length(which(response==1))) %>% 
   arrange(desc(count)) %>% # Order by count
+   mutate(question = case_when( # Rename question code to question text
+    question == "qc9_1" ~ "Email o telefonate fraudolente con le quali\nsi chiedono i Suoi dati personali",
+    question == "qc9_2" ~ "Frode acquisti online",
+    question == "qc9_3" ~ "Attacchi informatici per impedire accesso\na banche o servizi pubblici",
+    question == "qc9_4" ~ "Software dannosi (virus, ecc.) che infettano\ni dispositivi",
+    question == "qc9_5" ~ "Furto di identità",
+    question == "qc9_6" ~ "Ritrovo casuale di materiale online relativo\nad abusi sessuali su minori",
+    question == "qc9_7" ~ "Materiale online in cui si promuove l'odio\nrazziale o l'estremismo religioso",
+    question == "qc9_8" ~ "Attacco di hacker all'account email o all'account\nsu social network",
+    question == "qc9_9" ~ "Frode online legata alla carta di credito o a\ntransazioni bancarie online",
+    question == "qc9_10" ~ "Richiesta di pagamento per riacquisire il\ncontrollo del Suo dispositivo",
+  )) %>%
   slice(1:4) %>% # Get top 4
   ggplot(aes(fill=question, y=count, x=factor(age_category))) +
-  geom_bar(position = "dodge", stat="identity") +
-  ggtitle("Grado di istruzione") +
-  ylab("") +
-  theme_minimal()
+  geom_bar(position = "dodge", stat="identity", color="darkgrey") +
+  ylab("Intervistati") +
+  theme_minimal() +
+  guides(fill=guide_legend(ncol=2)) +
+  theme(legend.position="bottom",
+        legend.text = element_text(size = 9),
+        legend.box="vertical",
+        legend.margin=margin(),
+        axis.title.x = element_blank()) +
+  scale_fill_brewer(name = "", palette="Set3")
 ```
 
 
@@ -1021,7 +1147,7 @@ survey %>%
   drop_na() %>%
   filter(value != 0) %>%
   group_by(question) %>%
-  mutate(total= n()) %>% 
+  mutate(total= n()) %>%
   ungroup %>%
   group_by(question, response, total) %>%
   summarise(count = n()) %>%
@@ -1180,7 +1306,7 @@ survey %>%
   drop_na() %>% 
   filter(value != 0) %>%
   group_by(question) %>%
-  mutate(total= n()) %>% 
+  mutate(total= n()) %>%
   ungroup %>%
   group_by(question, response, total) %>%
   summarise(count = n()) %>%
@@ -1222,79 +1348,9 @@ survey %>%
 ```
 
 
-## Conoscenza canali ufficiali
-
-Solo il 22% degli intervistati è a conoscenza di un modo per segnalare un crimine informatico o qualsiasi altro comportamento illegale online. Un numero di telefono (26%) è il modo più conosciuto, seguito da altro metodi (23%) mentre solo un intervistato su cinque conosce il sito web.
-
-
-```{r aware_percent, eval=FALSE}
-survey %>%
-  drop_na(qc13t) %>%
-  group_by(qc13t) %>%
-  summarise(count = n()) %>%
-  mutate(percent = count / sum(count) * 100)
-
-survey %>%
-  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
-  select(c("question", "response")) %>%
-  group_by(question) %>% # Group by ID and TARG_AVG
-  summarise(count = length(which(response==1))) %>%
-  mutate(percent = count / sum(count) * 100) %>%
-  arrange(desc(percent)) # order by count
-```
-
-
-```{r aware}
-survey %>%
-  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
-  select(c("question", "response")) %>%
-  group_by(question) %>%
-  summarise(count = length(which(response==1))) %>%
-  mutate(question = case_when( # Rename question code to question text
-    question == "qc13_1" ~ "Sito Web",
-    question == "qc13_2" ~ "Indirizzo email",
-    question == "qc13_3" ~ "Modulo online",
-    question == "qc13_4" ~ "Numero di telefono",
-    question == "qc13_5" ~ "Altro",
-  )) %>%
-  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
-  scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
-  scale_fill_brewer(name = "Metodo", palette="Set2") +
-  xlab("") + 
-  ylab("Intervistati") +
-  theme_minimal()
-```
-
-
-```{r aware_age, eval=FALSE}
-survey %>%
-  drop_na(age_category) %>%
-  pivot_longer(qc13_1:qc13_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
-  select(c("age_category", "question", "response")) %>%
-  group_by(age_category, question) %>% # Group by ID and TARG_AVG
-  summarise(count = length(which(response==1))) %>%    # Count how many are there for each combination of ID and TARG_AVG
-  arrange(desc(count)) %>% # order by count
-  slice(1:4) %>% # get top 4
-  mutate(question = case_when( # Rename question code to question text
-    question == "qc13_1" ~ "Sito Web",
-    question == "qc13_2" ~ "Indirizzo email",
-    question == "qc13_3" ~ "Modulo online",
-    question == "qc13_4" ~ "Numero di telefono",
-    question == "qc13_5" ~ "Altro",
-  )) %>%
-  # Grouped
-  ggplot(aes(fill=question, y=count, x=factor(age_category))) +
-  geom_bar(position = "dodge", stat="identity") +
-  scale_fill_brewer(name = "Metodo", palette="Set2") +
-  xlab("Età") + 
-  ylab("Intervistati") +
-  theme_minimal()
-```
-
 ## Segnalazione crimini informatici
 
-La maggioranza degli intervistati (75%) non ha **mai** segnalato un crimine informatico, episodi di bullismo o molestie online, solo il 22% lo ha fatto: il 7% ha segnalato il crimine alla Polizia, circa il 6% alle associazioni di tutela dei consumatori, il 5% ad un sito web e il 4% al fornitore di servizi Internet (ISP). 
+La maggioranza degli intervistati (75%) non ha **mai** segnalato un crimine informatico, episodi di bullismo o molestie online, solo il 22% lo ha fatto: il 7% ha segnalato il crimine alla Polizia, circa il 6% alle associazioni di tutela dei consumatori, il 5% al sito web ufficiale e il 4% al fornitore di servizi Internet (ISP).
 
 ```{r report, eval=FALSE}
 survey %>%
@@ -1319,8 +1375,6 @@ survey %>%
   select(c("question", "response")) %>%
   group_by(question) %>%
   summarise(count = length(which(response==1))) %>%
-  #mutate(all = sum(count), 
-  #       percent = paste0(round(100 * count/all, 2), "%"))
   mutate(question = case_when( # Rename question code to question text
     question == "qc14_1" ~ "Polizia o autorità",
     question == "qc14_2" ~ "Fornitore di servizi",
@@ -1331,7 +1385,7 @@ survey %>%
     question == "qc14_7" ~ "Non so",
   )) %>%
   ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) + 
+  geom_bar(stat = "identity", position = position_dodge(), color="lightgrey") +
   scale_x_discrete(guide = guide_axis(n.dodge=3)) + # avoid labels overlap
   scale_fill_brewer(name = "Segnalazione", palette="Set2") +
   xlab("") + 
@@ -1365,49 +1419,12 @@ survey %>%
 ```
 
 
-## Azioni per tutelarsi
-
-Anche se un intervistato su tre evita di comunicare informazioni personali online (31%), ben uno su cinque ha paura di diventare vittima di un crimine informatico (22%). Inoltre, solo un intervistato su dieci ritiene di essere in grado di tutelarsi adeguatamente contro i crimini informatici (9%).
-
-```{r}
-survey %>%
-  pivot_longer(qc15r_1:qc15r_5, names_to = "question", values_to = "response", values_drop_na = TRUE) %>%
-  select(c("question", "response")) %>%
-  group_by(question) %>%
-  summarise(count = length(which(response==1))) %>%
-  mutate(all = sum(count), 
-         percent = ceiling(100 * count/all)) %>%
-  mutate(question = case_when( # Rename question code to question text
-    question == "qc15r_1" ~ "Informazioni personali online non siano\nconservate in modo sicuro dai siti web",
-    question == "qc15r_2" ~ "Informazioni personali online non siano\nconservate in modo sicuro dalle autorità pubbliche",
-    question == "qc15r_3" ~ "Evita di comunicare informazioni personali online",
-    question == "qc15r_4" ~ "Rischio di diventare vittima di un crimine\ninformatico sia in aumento",
-    question == "qc15r_5" ~ "In grado di tutelarsi adeguatamente contro\ni crimini informatici",
-  )) %>%
-  ggplot(aes(x = reorder(question, -count), y = count, fill = question)) + # reorder x axis by response count
-  geom_bar(stat = "identity", position = position_dodge()) +
-  geom_text(aes(label = percent, vjust = 1.8), size = 3, color="white") +
-  #geom_text(aes(label = percent)) + 
-  ylab("Intervistati") +
-  theme_minimal() +
-  guides(fill=guide_legend(ncol=2)) +
-  theme(legend.position="bottom",
-        legend.text = element_text(size = 9),
-        legend.box="vertical",
-        legend.margin=margin(),
-        axis.title.x = element_blank(),
-        axis.text.x=element_blank()) +
-  scale_fill_brewer(name = "", palette="Set2")
-  
-```
-
-
 ## Conclusioni
 
 - L'uso giornaliero di Internet attraverso lo smartphone può essere considerata un abitudine consolidata da parte dei cittadini italiani: lo scambio di email, la messaggistica e i social network sono le attività preferite a tal punto che è proprio la password dell'account email quella che viene cambiata più spesso, almeno per le persone fino a 44 anni. 
 
 * Le preoccupazioni riguardo la privacy e la sicurezza online, hanno cambiato il comportamento degli italiani: non aprono mail provenienti da sconosciuti, hanno installato un software antivirus e visitano solo siti che conoscono.
 
-* Purtroppo, anche usando tutte queste precauzioni, continuano a non sentirsi ben informati sui rischi relativi alla sicurezza informatica, e non si sentono in grado di tutelarsi adegauatamente contro i crimini informatici.
+* Purtroppo, anche usando tutte queste precauzioni, continuano a non sentirsi ben informati sui rischi relativi alla sicurezza informatica, e non si sentono in grado di tutelarsi adeguatamente contro i crimini informatici. Questo dato è peggiore rispetto alla media europea, dove quasi la metà degli intervistati ritiene di essere ben informato.
 
-* Anche se la maggior parte degli italiani sono preoccupati di diventare vittime di un crimine informatico, solo una minima parte lo è diventata e il crimine subito, per quanto fastidioso, si limita all ricezione di e‐mail o telefonate fraudolente o alla scoperta di software dannosi (virus, ecc.) sul proprio dispositivo. Forse proprio per questo motivo, solo un italiano su quattro ha denunciato il crimine alla Polizia o ad una associazione dei consumatori. Questo fatto mette in risalto anche un altra questione: i cittadini non conoscono i canali ufficiali messi a disposizione dalle Istituzioni per segnalare i crimini informatici, e continuano a rivolgersi alla Polizia, al provider di servizi internet o ai venditori sui loro siti web.
+* Anche se la maggior parte degli italiani sono preoccupati di diventare vittime di un crimine informatico, solo una minima parte lo è diventata e il crimine subito, per quanto fastidioso, si limita all ricezione di e‐mail o telefonate fraudolente o alla scoperta di software dannosi (virus, ecc.) sul proprio dispositivo. Forse proprio per questo motivo, solo un italiano su quattro ha denunciato un crimine alla Polizia o ad una associazione dei consumatori. Questo fatto mette in risalto anche un altra questione: i cittadini italiani non conoscono i canali ufficiali messi a disposizione dalle Istituzioni per segnalare i crimini informatici, e continuano a rivolgersi alla Polizia, al provider di servizi Internet o al sito web dei venditori online.

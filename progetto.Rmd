@@ -22,6 +22,7 @@ library(labelled)
 library(haven)
 
 # Convert Stata file
+# 27.607 entries, 802 columns
 df.stata <- read_dta(file = "data/ZA7580_v1-0-0.dta")
 
 # Select only interesting columns
@@ -179,6 +180,7 @@ survey <- survey %>%
   mutate(reported = as_factor(reported))
 
 # Saving survey in RData format
+# 1023 entries, 435 columns
 save(survey, file = "output/survey.rda")
 ```
 

@@ -17,6 +17,7 @@ slides > slide:not(.nobackground):after {
   content: '';
 }
 
+/* hide page bottom logo */
 slides > slide:not(.nobackground):before {
   background: none;
 }
